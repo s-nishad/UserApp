@@ -1,0 +1,141 @@
+@model List<UserApp.Models.User>
+
+@{
+    ViewData["Title"] = "User Management";
+}
+
+
+<div class="container">
+<h2 class="mb-4">User Management</h2>
+<p>             
+                <!-- Success Message -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div id="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+</p>
+<div class="card shadow-sm p-3">
+    <form method="post">
+        <div class="d-flex justify-content-between mb-3">
+            <div>
+                <button type="submit" formaction="@Url.Action("Block")" class="btn btn-outline-primary">
+                    <i class="fas fa-ban"></i> Block
+                </button>
+                <button type="submit" formaction="@Url.Action("Unblock")" class="btn btn-outline-primary">
+                    <i class="fas fa-lock-open"></i>
+                </button>
+                <button type="submit" formaction="@Url.Action("Delete")" class="btn btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+                
+            </div>
+            <input type="text" class="form-control w-25" placeholder="Filter" id="filterInput">
+        </div>
+
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th><input type="checkbox" id="selectAll" /></th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Last Seen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.OrderByDescending(u => u.LastLoginTime))
+                {
+                    
+                       
+                        @if (user.Status)
+                        {
+                        <tr>
+                            <td><input type="checkbox" name="selectedUsers" value="@user.Id" /></td>                                       
+                            <td> @user.Name</td>                          
+                            <td>@user.Email</td>
+                            <td>
+                                <span class="last-seen tooltip-main" data-bs-toggle="tooltip" title="@user.LastLoginTime">
+                                    @FormatLastSeen(user.LastLoginTime)
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                        
+                        else
+                        {
+                        <tr class="opacity-50">
+                            <td><input type="checkbox" name="selectedUsers" value="@user.Id" /></td>
+                            <td class="text-decoration-line-through"> @user.Name</td>
+                            <td>@user.Email</td>
+                            <td>
+                                <span class="last-seen" data-bs-toggle="tooltip" title="@user.LastLoginTime">
+                                    @FormatLastSeen(user.LastLoginTime)
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                        
+                }
+            </tbody>
+        </table>
+    </form>
+</div>
+
+</div>
+<script>
+    document.getElementById('selectAll').addEventListener('change', function () {
+        document.querySelectorAll('input[name="selectedUsers"]').forEach(checkbox => checkbox.checked = this.checked);
+    });
+
+    // Enable Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Simple search filter
+    document.getElementById('filterInput').addEventListener('keyup', function () {
+        var filter = this.value.toLowerCase();
+        document.querySelectorAll("tbody tr").forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var successMessage = document.getElementById("successMessage");
+
+        if (successMessage) {
+            successMessage.addEventListener("mouseover", function () {
+                clearTimeout(hideTimeout); // Prevent hiding when hovered
+            });
+
+            successMessage.addEventListener("mouseleave", function () {
+                hideTimeout = setTimeout(function () {
+                    successMessage.classList.add("fade");
+                    setTimeout(() => successMessage.remove(), 500); // Remove after fade effect
+                }, 5000); // Hide after 5s
+            });
+
+            var hideTimeout = setTimeout(function () {
+                successMessage.classList.add("fade");
+                setTimeout(() => successMessage.remove(), 500); // Remove after fade effect
+            }, 5000); // Hide after 5s
+        }
+    });
+
+</script>
+
+@functions {
+    string FormatLastSeen(DateTime lastLoginTime)
+    {
+        var diff = DateTime.UtcNow - lastLoginTime;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} minutes ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} hours ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} days ago";
+        return lastLoginTime.ToString("MMMM dd, yyyy");
+    }
+}
