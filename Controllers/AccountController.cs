@@ -96,19 +96,7 @@ namespace UserApp.Controllers
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
                     // Ensure the user is authenticated
-                    if (User.Identity != null && User.Identity.IsAuthenticated)
-                    {
-                        // Log the successful authentication
-                        Console.WriteLine("User authenticated successfully.");
-
-                        // Redirect to the User Management page
-                        return RedirectToAction("Index", "UserManagement");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Authentication failed.");
-                        Console.WriteLine("Authentication failed.");
-                    }
+                    return RedirectToAction("Index", "UserManagement");
                 }
 
                 // If login fails, show an error message
@@ -118,6 +106,16 @@ namespace UserApp.Controllers
 
             // If validation fails, show the login form again
             return View(model);
+        }
+
+        // logout
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            TempData["SuccessMessage"] = "User Logout successfully!";
+            return RedirectToAction("Login");
         }
     }
 }
